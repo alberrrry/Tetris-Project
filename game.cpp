@@ -26,34 +26,34 @@ int shapes[7][4][4] =
     1,0,0,0, // I
 
     1,0,0,0,
+    1,0,0,0,
+    1,1,0,0,
+    0,0,0,0, // L
+
+    1,0,0,0,
     1,1,0,0,
     0,1,0,0,
     0,0,0,0, // Z
 
-    0,1,0,0,
     1,1,0,0,
-    1,0,0,0,
-    0,0,0,0, // S
+    1,1,0,0,
+    0,0,0,0,
+    0,0,0,0, // O
 
     1,0,0,0,
     1,1,0,0,
     1,0,0,0,
     0,0,0,0, // T
 
-    1,0,0,0,
-    1,0,0,0,
+    0,1,0,0,
     1,1,0,0,
-    0,0,0,0, // L
+    1,0,0,0,
+    0,0,0,0, // S
 
     0,1,0,0,
     0,1,0,0,
     1,1,0,0,
-    0,0,0,0, // J
-
-    1,1,0,0,
-    1,1,0,0,
-    0,0,0,0,
-    0,0,0,0 // O
+    0,0,0,0  // J
 };
 
 // Define colors
@@ -68,14 +68,10 @@ const Color colors[] =
     Color::Cyan
 };
 
-
-
 int main()
 {  
     RenderWindow window(VideoMode(1200,800),"Game Space");
     sf::Color gridColors[COLUMNS][ROWS] = {sf::Color::White};
-bool gameover;
-unsigned lines_cleared = 0;
 
   // Load home screen texture
     Texture home;
@@ -111,10 +107,10 @@ unsigned lines_cleared = 0;
 
     Text gameover_text;
     gameover_text.setFont(font); // Set the font for the text
-    gameover_text.setString("aw u lost ");
+    gameover_text.setString("GAME OVER");
     gameover_text.setCharacterSize(80);
     gameover_text.setFillColor(sf::Color::White);
-    gameover_text.setPosition(850.0f, 400.0f);
+    gameover_text.setPosition(450.0f, 350.0f);
 
      // Load background image
     sf::Texture blockTexture;
@@ -132,21 +128,32 @@ unsigned lines_cleared = 0;
 
          // draw a cell in the grid
     RectangleShape cell(Vector2f(CELL_SIZE, CELL_SIZE));
+    RectangleShape preview_cell(sf::Vector2f(CELL_SIZE, CELL_SIZE));
 
       // populate a block
     int block;
     int b_x;
     int b_y;
+    int pre;
+
+    block=rand() % 7;
+    
+    auto preview_block = [&]()
+    {
+        pre=rand() % 7;
+    };
 
     auto new_block = [&]()
     {
-        block = rand() % 7;
+        if(pre==6)
+        block=0;
+        else
+        block=pre+1;
         b_x = COLUMNS / 2;
         b_y = 0;
     };
-
-
-    new_block();
+ preview_block(); 
+ new_block();
 
     // boundary check for a block
     auto check_block_boundary = [&]()
@@ -162,14 +169,14 @@ unsigned lines_cleared = 0;
                 if (x + b_x < 0 || x + b_x >= COLUMNS || y + b_y >= ROWS)
                     return false;
 
-                // collsion with world blocks
+                // collision with world blocks
                 if (grid[y + b_y][x + b_x] )
                     return false;
             }
-
         }
         return true;
     };
+
 
     // clear lines when grid width is full-filled
     auto clear_lines = [&]()
@@ -197,8 +204,9 @@ unsigned lines_cleared = 0;
             }
             else if (count_width == COLUMNS)
             {
-                score += 20;
+                score += 20;{
                 score_display.setString("Score: " + std::to_string(score));
+                }
             }
         }
     };
@@ -229,6 +237,7 @@ unsigned lines_cleared = 0;
 
             // start next block
             new_block();
+            preview_block();
             return false;
         }
         return true;
@@ -275,22 +284,6 @@ unsigned lines_cleared = 0;
 
     };
 
-     //check game over
-         auto checkGameOver=[&]() {
-            bool gameover;
-        // Check if any tetromino blocks are at the top of the grid
-         for (int y = 0; y < 4; y++)
-            {
-                for (int x = 0; x < 4; x++)
-                {
-                  if (grid[y + b_y][x + b_x] )
-                    gameover=true;
-                }
-            }
-        return false; // Not game over
-    };
-
-
      Clock clock;
 
   
@@ -298,7 +291,7 @@ unsigned lines_cleared = 0;
     GameState gameState = Home;
 
     // Main loop
-    while (window.isOpen() && !gameover) {
+    while (window.isOpen()) {
         // Process events
         Event event;
         while (window.pollEvent(event)) {
@@ -312,21 +305,6 @@ unsigned lines_cleared = 0;
                 }
             }
 
-            else if (event.type == sf::Event::MouseButtonPressed) {
-                if (event.mouseButton.button == sf::Mouse::Left) {
-                    // Get the mouse position in window coordinates
-                    sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
-
-                    // Get the corresponding grid cell
-                    int gridX = mousePosition.x / CELL_SIZE;
-                    int gridY = mousePosition.y / CELL_SIZE;
-
-                    // Change the color of the clicked grid cell
-                    if (gridX >= 0 && gridX <COLUMNS && gridY >= 0 && gridY < ROWS) {
-                        gridColors[gridX][gridY] = sf::Color::Green; // Change color to green (you can use any color)
-                    }
-                }
-            }
         }
         window.clear();
         // Draw based on the current game state
@@ -337,7 +315,7 @@ unsigned lines_cleared = 0;
         else if (gameState == Game) {
               
 
-         while (window.isOpen() && !gameover)
+         while (window.isOpen())
     {
         // start clock
         static float prev = clock.getElapsedTime().asSeconds();
@@ -394,8 +372,35 @@ unsigned lines_cleared = 0;
 
         // clear window every frame
         window.clear();
-        
         window.draw(score_display);
+
+        
+        RectangleShape preview_border(sf::Vector2f(5 * CELL_SIZE, 5 * CELL_SIZE));
+				preview_border.setFillColor(sf::Color(0, 0, 0));
+				preview_border.setOutlineThickness(-1);
+				preview_border.setPosition(850, 200);
+                //Draw the preview border
+				window.draw(preview_border);
+
+                auto draw_preview = [&](){
+                for (int y = 0; y < 4; y++)
+                 {
+                for (int x = 0; x < 4; x++)
+                {
+                    if (shapes[pre][y][x])
+                    {
+                         preview_cell.setPosition(Vector2f(900 + (x * CELL_SIZE), 220 + (y * CELL_SIZE)));
+                         preview_cell.setFillColor(colors[pre]);
+                         /*preview_cell.setOutlineThickness(1.0f);
+                         preview_cell.setOutlineColor(sf::Color::Black);*/
+                         window.draw(preview_cell);
+                    }
+                }
+                 }
+                };
+
+
+                draw_preview();
 
 
         // draw grid
@@ -414,9 +419,12 @@ unsigned lines_cleared = 0;
                 }
             }
         };
+        //if(check_block_boundary())
         draw_grid();
         // define C++11 lambda function
         // this function can use all the outside variables, such as block
+
+        //khasne blocks ko function
         auto draw_block = [&]()
         {
             cell.setFillColor(colors[block]);
@@ -436,48 +444,17 @@ unsigned lines_cleared = 0;
         // call the above lambda function
         draw_block();
 
-        RectangleShape preview_border(sf::Vector2f(5 * CELL_SIZE, 5 * CELL_SIZE));
-				preview_border.setFillColor(sf::Color(0, 0, 0));
-				preview_border.setOutlineThickness(-1);
-				preview_border.setPosition(CELL_SIZE * (0.5f * COLUMNS - 2.5f), CELL_SIZE * (0.25f * ROWS - 2.5f));
-
-				/*Clear the window from the previous frame
-				window.clear();
-
-        //Fanuitemg iow gfnreuignoei gnrign yerashr trujngfipoag
-				cell.setFillColor(colors::Blue);
-				cell.setSize(sf::Vector2f(CELL_SIZE - 1, CELL_SIZE - 1)); */
-
-				//Draw the preview border
-				window.draw(preview_border);
-
-                //next tetromino
-                
-
-				/*Draw the next tetromino
-				for (Position& mino : get_tetromino(next_shape, static_cast<unsigned char>(1.5f * COLUMNS), static_cast<unsigned char>(0.25f * ROWS)))
-				{
-					//Shifting the tetromino to the center of the preview border
-					unsigned short next_tetromino_x = CELL_SIZE * mino.x;
-					unsigned short next_tetromino_y = CELL_SIZE * mino.y;
-
-					if (0 == next_shape)
-					{
-						next_tetromino_y += static_cast<unsigned char>(round(0.5f * CELL_SIZE));
-					}
-					else if (3 != next_shape)
-					{
-						next_tetromino_x -= static_cast<unsigned char>(round(0.5f * CELL_SIZE));
-					}
-
-					cell.setPosition(next_tetromino_x, next_tetromino_y);
-
-					window.draw(cell);
-				}*/
+         for (int y = 0; y < 4; y++)
+        {
+            for (int x = 0; x < 4; x++)
+            {
+                if (grid[b_y][b_x]){
+                window.clear();
+                     window.draw(gameover_text);}
+            }
+        }
 
 
-
-        checkGameOver();
 
         // display rendered object on screen
         window.display();
@@ -489,4 +466,3 @@ unsigned lines_cleared = 0;
     }
     return 0;
 }
-
