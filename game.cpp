@@ -136,7 +136,6 @@ int main()
     int b_y;
     int pre;
 
-    block=rand() % 7;
     
     auto preview_block = [&]()
     {
@@ -145,15 +144,12 @@ int main()
 
     auto new_block = [&]()
     {
-        if(pre==6)
-        block=0;
-        else
-        block=pre+1;
         b_x = COLUMNS / 2;
         b_y = 0;
     };
  preview_block(); 
  new_block();
+ block=rand() % 7;
 
     // boundary check for a block
     auto check_block_boundary = [&]()
@@ -236,6 +232,7 @@ int main()
             clear_lines();
 
             // start next block
+            block=pre;
             new_block();
             preview_block();
             return false;
